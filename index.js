@@ -16,7 +16,8 @@ module.exports = class Request {
     if (typeof isStringfield === 'boolean' && isStringfield) {
       data = qs.stringify(data)
     } else if (Object.prototype.toString.call(isStringfield) === '[object Object]') {
-      op = isStringfield
+      op = isStringfield;
+      data = qs.stringify(data);
     }
 
     return this.request({
@@ -67,17 +68,19 @@ module.exports = class Request {
         get(t, method) {
           if (methods.includes(method)) {
             let pathVal = paths[path];
-            let usePath, adapter;
+            let usePath, adapin, adapout;
             if(typeof pathVal === 'string'){
               usePath = pathVal
             }
             if (Object.prototype.toString.call(pathVal) === '[object Object]'){
               usePath = pathVal.path;
-              adapter = pathVal.adapter;
+              adapin = pathVal.adapin;
+              adapout = pathVal.adapout;
             }
-            return function (...rest) {
-              let p = self[method](usePath, ...rest);
-              if (adapter) p.then(adapter)
+            return function (data,...rest) {
+              if (adapin) data = adapin(data);
+              let p = self[method](usePath, data, ...rest);
+              if (adapout) p.then(adapout);
               return p;
             }
           }
@@ -98,7 +101,7 @@ module.exports = class Request {
     return this.apis
   }
 
-  get new() {
+  get n() {
 
     function fn(op) {
       return this.createNewAxios(op)
