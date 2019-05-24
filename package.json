@@ -1,0 +1,26 @@
+{
+  "name": "puta",
+  "version": "0.0.1",
+  "description": "A request lib, encapsulation of axios.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flowke/puta.git"
+  },
+  "keywords": [
+    "request",
+    "axios",
+    "req",
+    "puta"
+  ],
+  "author": "flowke",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/flowke/puta/issues"
+  },
+  "homepage": "https://github.com/flowke/puta#readme",
+  "dependencies": {
+    "axios": "^0.18.0",
+    "qs": "^6.7.0"
+  }
+}
