@@ -4,7 +4,6 @@ const qs = require('qs');
 module.exports = class Request {
   constructor(initRequest, paths) {
     this.axios = axios.create(initRequest)
-    this.apis = null
     this.mAPis = {}
     this.qs = qs;
     this.defaultsOp = initRequest;
