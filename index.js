@@ -5,10 +5,11 @@ module.exports = class Request {
   constructor(initRequest, paths) {
     this.axios = axios.create(initRequest)
     this.apis = null
+    this.mAPis = {}
     this.qs = qs;
     this.defaultsOp = initRequest;
     if (paths) {
-      this.registerApi(paths)
+      this.moduleRegister(paths, 'common');
     }
   }
 
@@ -56,6 +57,10 @@ module.exports = class Request {
     this.axios.interceptors.response.use(...rest)
   }
 
+  moduleRegister=(apis, name)=>{
+    this.mAPis[name] = this.registerApi(apis);
+  }
+
   registerApi(paths) {
     let pathNames = Object.keys(paths)
     let self = this
@@ -88,7 +93,7 @@ module.exports = class Request {
         }
       })
 
-    this.apis = new Proxy({}, {
+    return new Proxy({}, {
       get(t, path) {
         if (t[path]) return t[path]
         if (pathNames.includes(path)) {
@@ -98,7 +103,6 @@ module.exports = class Request {
       }
     })
 
-    return this.apis
   }
 
   get n() {
@@ -114,6 +118,17 @@ module.exports = class Request {
     })
 
     return bindFn
+  }
+
+  get apis(){
+    return new Proxy({}, {
+      get(t, path){
+        for (const key in this.mAPis) {
+          const elt = object[key];
+          if(elt[path]) return elt[path]
+        }
+      }
+    })
   }
 
   mix(op) {
