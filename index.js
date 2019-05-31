@@ -4,7 +4,7 @@ const qs = require('qs');
 module.exports = class Request {
   constructor(initRequest, paths) {
     this.axios = axios.create(initRequest)
-    this.mAPis = {}
+    this.mApis = {}
     this.qs = qs;
     this.defaultsOp = initRequest;
     if (paths) {
@@ -57,7 +57,7 @@ module.exports = class Request {
   }
 
   moduleRegister=(apis, name)=>{
-    this.mAPis[name] = this.registerApi(apis);
+    this.mApis[name] = this.registerApi(apis);
   }
 
   registerApi(paths) {
@@ -122,8 +122,8 @@ module.exports = class Request {
   get apis(){
     return new Proxy({}, {
       get(t, path){
-        for (const key in this.mAPis) {
-          const elt = object[key];
+        for (const key in this.mApis) {
+          const elt = this.mApis[key];
           if(elt[path]) return elt[path]
         }
       }
