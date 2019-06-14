@@ -27,6 +27,12 @@ require("core-js/modules/es6.date.to-string");
 
 require("core-js/modules/es6.object.to-string");
 
+var _axios = _interopRequireDefault(require("axios"));
+
+var _stringify = _interopRequireDefault(require("./stringify"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -36,10 +42,6 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-var axios = require('axios');
-
-var stringify = require('./stringify');
 
 var Request =
 /*#__PURE__*/
@@ -54,10 +56,10 @@ function () {
       var op = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
       if (typeof isStringfield === 'boolean' && isStringfield) {
-        data = stringify(data);
+        data = (0, _stringify.default)(data);
       } else if (Object.prototype.toString.call(isStringfield) === '[object Object]') {
         op = isStringfield;
-        data = stringify(data);
+        data = (0, _stringify.default)(data);
       }
 
       return _this.request(_objectSpread({
@@ -103,7 +105,7 @@ function () {
       _this.mApis[name] = _this.registerApi(apis);
     });
 
-    this.axios = axios.create(initRequest);
+    this.axios = _axios.default.create(initRequest);
     this.mApis = {};
     this.defaultsOp = initRequest;
 
@@ -115,7 +117,7 @@ function () {
   _createClass(Request, [{
     key: "all",
     value: function all(arr) {
-      return axios.all(arr);
+      return _axios.default.all(arr);
     }
   }, {
     key: "registerApi",
@@ -186,7 +188,7 @@ function () {
     value: function createNewAxios(op) {
       var req = {};
       req.prototype = this;
-      req.axios = axios.create(op);
+      req.axios = _axios.default.create(op);
       return req;
     }
   }, {
@@ -198,17 +200,18 @@ function () {
 
       var bindFn = fn.bind(this);
       Object.assign(bindFn, this, {
-        axios: axios.create(op)
+        axios: _axios.default.create(op)
       });
       return bindFn;
     }
   }, {
     key: "apis",
     get: function get() {
+      var self = this;
       return new Proxy({}, {
         get: function get(t, path) {
-          for (var key in this.mApis) {
-            var elt = this.mApis[key];
+          for (var key in self.mApis) {
+            var elt = self.mApis[key];
             if (elt[path]) return elt[path];
           }
         }
