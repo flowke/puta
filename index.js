@@ -1,5 +1,5 @@
 const axios = require('axios');
-const qs = require('qs');
+const stringify = require('./lib/stringify');
 
 module.exports = class Request {
   constructor(initRequest, paths) {
@@ -17,7 +17,7 @@ module.exports = class Request {
       data = qs.stringify(data)
     } else if (Object.prototype.toString.call(isStringfield) === '[object Object]') {
       op = isStringfield;
-      data = qs.stringify(data);
+      data = stringify(data);
     }
 
     return this.request({
