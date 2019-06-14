@@ -5,7 +5,6 @@ module.exports = class Request {
   constructor(initRequest, paths) {
     this.axios = axios.create(initRequest)
     this.mApis = {}
-    this.qs = qs;
     this.defaultsOp = initRequest;
     if (paths) {
       this.moduleRegister(paths, 'common');
@@ -14,7 +13,7 @@ module.exports = class Request {
 
   post = (url, data, isStringfield = true, op = {}) => {
     if (typeof isStringfield === 'boolean' && isStringfield) {
-      data = qs.stringify(data)
+      data = stringify(data)
     } else if (Object.prototype.toString.call(isStringfield) === '[object Object]') {
       op = isStringfield;
       data = stringify(data);
