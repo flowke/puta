@@ -4,7 +4,7 @@
   "description": "A request lib, encapsulation of axios.",
   "main": "dist/index.js",
   "scripts": {
-    "build": "babel ./**/*.js -d dist"
+    "build": "babel **/*.js -d dist"
   },
   "repository": {
     "type": "git",
@@ -24,7 +24,7 @@
   "homepage": "https://github.com/flowke/puta#readme",
   "dependencies": {
     "axios": "^0.18.0",
-    "core-js": "^3.1.3"
+    "core-js": "^2.6.9"
   },
   "devDependencies": {
     "@babel/cli": "^7.4.4",
