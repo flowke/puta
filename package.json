@@ -1,6 +1,6 @@
 {
   "name": "puta",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "A request lib, encapsulation of axios.",
   "main": "dist/index.js",
   "scripts": {
@@ -34,8 +34,6 @@
     "husky": "^2.4.1"
   },
   "husky": {
-    "hooks": {
-
-    }
+    "hooks": {}
   }
 }
