@@ -5,7 +5,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+require("core-js/modules/es7.symbol.async-iterator");
+
 require("core-js/modules/es6.symbol");
+
+require("core-js/modules/es6.regexp.split");
 
 require("core-js/modules/es6.object.assign");
 
@@ -19,19 +23,27 @@ require("core-js/modules/es6.array.iterator");
 
 require("core-js/modules/es6.object.keys");
 
-require("core-js/modules/es6.function.name");
-
 require("core-js/modules/es6.regexp.to-string");
 
 require("core-js/modules/es6.date.to-string");
 
 require("core-js/modules/es6.object.to-string");
 
+require("core-js/modules/es6.function.name");
+
 var _axios = _interopRequireDefault(require("axios"));
 
 var _stringify = _interopRequireDefault(require("./stringify"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }
 
@@ -51,21 +63,42 @@ function () {
 
     _classCallCheck(this, Request);
 
-    _defineProperty(this, "post", function (url, data) {
-      var isStringfield = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-      var op = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+    _defineProperty(this, "post", function () {
+      return _this.dataMethod('post').apply(void 0, arguments);
+    });
 
-      if (typeof isStringfield === 'boolean' && isStringfield) {
-        data = (0, _stringify.default)(data);
-      } else if (Object.prototype.toString.call(isStringfield) === '[object Object]') {
-        op = isStringfield;
-        data = (0, _stringify.default)(data);
-      }
+    _defineProperty(this, "put", function () {
+      return _this.dataMethod('put').apply(void 0, arguments);
+    });
 
+    _defineProperty(this, "patch", function () {
+      return _this.dataMethod('patch').apply(void 0, arguments);
+    });
+
+    _defineProperty(this, "delete", function (url, data) {
+      var op = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
       return _this.request(_objectSpread({
         url: url,
-        method: 'post',
-        data: data
+        params: data,
+        method: 'delete'
+      }, op));
+    });
+
+    _defineProperty(this, "head", function (url, data) {
+      var op = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return _this.request(_objectSpread({
+        url: url,
+        params: data,
+        method: 'head'
+      }, op));
+    });
+
+    _defineProperty(this, "options", function (url, data) {
+      var op = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return _this.request(_objectSpread({
+        url: url,
+        params: data,
+        method: 'options'
       }, op));
     });
 
@@ -115,6 +148,29 @@ function () {
   }
 
   _createClass(Request, [{
+    key: "dataMethod",
+    value: function dataMethod(method) {
+      var _this2 = this;
+
+      return function (url, data) {
+        var isStringfield = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+        var op = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+        if (typeof isStringfield === 'boolean' && isStringfield) {
+          data = (0, _stringify.default)(data);
+        } else if (Object.prototype.toString.call(isStringfield) === '[object Object]') {
+          op = isStringfield;
+          data = (0, _stringify.default)(data);
+        }
+
+        return _this2.request(_objectSpread({
+          url: url,
+          method: method,
+          data: data
+        }, op));
+      };
+    }
+  }, {
     key: "all",
     value: function all(arr) {
       return _axios.default.all(arr);
@@ -186,10 +242,83 @@ function () {
   }, {
     key: "createNewAxios",
     value: function createNewAxios(op) {
-      var req = {};
-      req.prototype = this;
-      req.axios = _axios.default.create(op);
-      return req;
+      var Req = function Req() {};
+
+      Req.prototype = Object.create(this);
+      Req.prototype.axios = _axios.default.create(op);
+      return new Req();
+    }
+  }, {
+    key: "createSource",
+    value: function createSource() {
+      var self = this;
+      var methods = ['get', 'post'];
+
+      function Source() {
+        this.cache = {};
+      }
+
+      Source.prototype = Object.create(this);
+
+      Source.prototype.take = function (path) {
+        return this.cache[path] !== undefined ? this.cache[path] : null;
+      };
+
+      Source.prototype.f = function (path) {
+        var _this3 = this;
+
+        var pathArr = path.trim().split('.');
+        var len = pathArr.length;
+        var method = 'get';
+        var module = null;
+        var name = null;
+
+        if (len === 1) {
+          name = pathArr[0];
+        }
+
+        if (len === 3) {
+          var _pathArr = _slicedToArray(pathArr, 3);
+
+          module = _pathArr[0];
+          name = _pathArr[1];
+          method = _pathArr[2];
+        }
+
+        if (len === 2) {
+          if (methods.indexOf(pathArr[1]) !== -1) {
+            method = pathArr[1];
+            name = pathArr[0];
+          } else {
+            module = pathArr[0];
+            name = pathArr[1];
+          }
+        }
+
+        for (var _len3 = arguments.length, rest = new Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
+          rest[_key3 - 1] = arguments[_key3];
+        }
+
+        if (method && name !== null && module === null) {
+          var _self$apis$name;
+
+          return (_self$apis$name = self.apis[name])[method].apply(_self$apis$name, rest).then(function (res) {
+            _this3.cache[name] = res;
+            return res;
+          });
+        } else if (method && module !== null && name !== null) {
+          var _self$mApis$module$na;
+
+          return (_self$mApis$module$na = self.mApis[module][name])[method].apply(_self$mApis$module$na, rest).then(function (res) {
+            _this3.cache[module + '.' + name] = res;
+            return res;
+          });
+        } else {
+          throw new Error('path is not valid');
+        }
+      };
+
+      return new Source();
     }
   }, {
     key: "n",
