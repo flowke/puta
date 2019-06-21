@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = _default;
 
 require("core-js/modules/es7.symbol.async-iterator");
 
@@ -318,6 +318,7 @@ function () {
         }
       };
 
+      Source.prototype.f.take = Source.prototype.teke;
       return new Source();
     }
   }, {
@@ -351,4 +352,6 @@ function () {
   return Request;
 }();
 
-exports.default = Request;
+function _default(op, paths) {
+  return new Request(op, paths);
+}

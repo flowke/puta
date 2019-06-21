@@ -207,25 +207,25 @@ path is a string that has a pattern of follows:
 example:
 
 ```js
-source('menu.xxx.get', ...rest):
+source.f('menu.xxx.get', ...rest):
 // equals
 puta.mApis.menu.xxx.get(...rest)
 
 ---
 
-source('menu.xxx', ...rest):
+source.f('menu.xxx', ...rest):
 // equals
 puta.mApis.menu.xxx.get(...rest)
 
 ---
 
-source('xxx.post', ...rest):
+source.f('xxx.post', ...rest):
 // equals
 puta.apis.xxx.post(...rest)
 
 ---
 
-source('xxx', ...rest):
+source.f('xxx', ...rest):
 // equals
 puta.apis.xxx.get(...rest)
 

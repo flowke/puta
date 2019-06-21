@@ -110,7 +110,7 @@ req.apis.d.get() //此处 get可以省略
 ### `new Puta([options], [paths])`  or  `puta([options], [paths])`
 
 **options**  
-options 就是 axios 的 config, 之后的请求都共享这份基础配置, 触发在请求时另外指定.
+options 就是 axios 的 config, 之后的请求都共享这份基础配置, 除非在请求时另外指定.
 
 **paths**  type: object
 
@@ -212,25 +212,25 @@ path 参数是一个字符串, 遵循以下规则:
 example:
 
 ```js
-source('menu.xxx.get', ...rest):
+source.f('menu.xxx.get', ...rest):
 // equals
 puta.mApis.menu.xxx.get(...rest)
 
 ---
 
-source('menu.xxx', ...rest):
+source.f('menu.xxx', ...rest):
 // equals
 puta.mApis.menu.xxx.get(...rest)
 
 ---
 
-source('xxx.post', ...rest):
+source.f('xxx.post', ...rest):
 // equals
 puta.apis.xxx.post(...rest)
 
 ---
 
-source('xxx', ...rest):
+source.f('xxx', ...rest):
 // equals
 puta.apis.xxx.get(...rest)
 
