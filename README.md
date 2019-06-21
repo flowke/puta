@@ -1,6 +1,8 @@
 # puta
 A request lib, base on axios.
 
+[简体中文](./zh-cn-readme.md)
+
 ## Installing
 
 ```
@@ -88,10 +90,13 @@ req.moduleRegister({
 // now you can perform a request like this:
 
 // use the 'a' path in the module menu
+// access path with module namespace
 req.mApis.home.a() // get
 req.mApis.home.a.post() //post
+
+// access path without module namespace
 req.apis.a.post() //post
-req.apis.a.get() //get
+req.apis.d.get() //get
 
 ```
 
@@ -180,7 +185,7 @@ type: `object`
 
 adapin is a function, receive request data, you will get a chance to transform data, and must to return the data after worked	out.
 
-adapin is a function, receive response data, you will get a chance to transform data, and must to return the data after worked	out.
+adapout is a function, receive response data, you will get a chance to transform data, and must to return the data after worked	out.
 
 **.createSource()** :sweet_potato::sweet_potato::sweet_potato:
 
