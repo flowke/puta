@@ -129,9 +129,9 @@ directly to access api paths without namespace, that means there is a risk of na
 `.delete(url [, params [, config]])`  
 `.head(url [, params [, config]])`  
 `.options(url [, params [, config]])`  
-`.post(url [,data, [,stringified], [,config]])`  
-`.put(url [,data, [,stringified], [,config]])`  
-`.patch(url [,data, [,stringified], [,config]])`
+`.post(url [,data, [,stringified] [,config]])`  
+`.put(url [,data, [,stringified] [,config]])`  
+`.patch(url [,data, [,stringified] [,config]])`
 
 *config*: is the axios config.  
 
