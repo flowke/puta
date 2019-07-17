@@ -1,6 +1,6 @@
 {
   "name": "puta",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "A request lib, encapsulation of axios.",
   "main": "dist/index.js",
   "scripts": {
