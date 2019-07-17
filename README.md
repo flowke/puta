@@ -1,5 +1,5 @@
 # puta
-A request lib, base on axios.
+A request lib, base on [axios](https://github.com/axios/axios).
 
 [简体中文](./zh-cn-readme.md)
 

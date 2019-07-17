@@ -1,5 +1,5 @@
 # puta
-基于 axios 封装的请求库.
+基于 [axios](https://github.com/axios/axios) 封装的请求库.
 
 [中文](./zh-cn-readme.md)
 
