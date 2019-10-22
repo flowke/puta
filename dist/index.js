@@ -11,8 +11,6 @@ require("core-js/modules/es6.symbol");
 
 require("core-js/modules/es6.regexp.split");
 
-require("core-js/modules/es6.object.assign");
-
 require("core-js/modules/es6.string.includes");
 
 require("core-js/modules/es7.array.includes");
@@ -28,6 +26,8 @@ require("core-js/modules/es6.regexp.to-string");
 require("core-js/modules/es6.date.to-string");
 
 require("core-js/modules/es6.object.to-string");
+
+require("core-js/modules/es6.object.assign");
 
 require("core-js/modules/es6.function.name");
 
@@ -60,6 +60,8 @@ var Request =
 function () {
   function Request(initRequest, paths) {
     var _this = this;
+
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
     _classCallCheck(this, Request);
 
@@ -134,33 +136,37 @@ function () {
       (_this$axios$intercept2 = _this.axios.interceptors.response).use.apply(_this$axios$intercept2, arguments);
     });
 
-    _defineProperty(this, "moduleRegister", function (apis, name) {
-      _this.mApis[name] = _this.registerApi(apis);
+    _defineProperty(this, "moduleRegister", function (apis, name, option) {
+      return _this.mApis[name] = _this.registerApi(apis, option);
     });
 
     this.axios = _axios.default.create(initRequest);
+    this.options = Object.assign({
+      stringfieldData: false
+    }, options);
     this.mApis = {};
     this.defaultsOp = initRequest;
 
     if (paths) {
       this.moduleRegister(paths, 'common');
     }
-  }
+  } // 需要传送 data body 的 method
+
 
   _createClass(Request, [{
     key: "dataMethod",
     value: function dataMethod(method) {
       var _this2 = this;
 
-      return function (url, data) {
-        var isStringfield = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+      return function (url, data, isStringfield) {
         var op = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+        isStringfield = isStringfield === undefined ? _this2.options.stringfieldData : isStringfield;
 
         if (typeof isStringfield === 'boolean' && isStringfield) {
           data = (0, _stringify.default)(data);
         } else if (Object.prototype.toString.call(isStringfield) === '[object Object]') {
           op = isStringfield;
-          data = (0, _stringify.default)(data);
+          if (_this2.options.stringfieldData) data = (0, _stringify.default)(data);
         }
 
         return _this2.request(_objectSpread({
@@ -177,10 +183,16 @@ function () {
     }
   }, {
     key: "registerApi",
+    // {pathName: value}
+    // e.g.: pathName: fetchData...
+    // e.q.: 
+    //    stringpath
+    //    {path, adapin, adapout, option} 
     value: function registerApi(paths) {
+      var moduleOption = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var pathNames = Object.keys(paths);
       var self = this;
-      var methods = ['get', 'post'];
+      var methods = ['get', 'post', 'put', 'patch', 'delete', 'head', 'option'];
 
       var createMethod = function createMethod(path) {
         return new Proxy(function () {
@@ -207,12 +219,14 @@ function () {
 
               return function (data) {
                 if (adapin) data = adapin(data);
+                var p = null;
 
-                for (var _len2 = arguments.length, rest = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-                  rest[_key2 - 1] = arguments[_key2];
+                if (['post', 'put', 'patch'].includes(method)) {
+                  p = self[method](usePath, data, arguments.length <= 1 ? undefined : arguments[1], _objectSpread({}, moduleOption, pathVal.option || {}, (arguments.length <= 2 ? undefined : arguments[2]) || {}));
+                } else {
+                  p = self[method](usePath, data, _objectSpread({}, moduleOption, pathVal.option || {}, (arguments.length <= 1 ? undefined : arguments[1]) || {}));
                 }
 
-                var p = self[method].apply(self, [usePath, data].concat(rest));
                 if (adapout) p.then(adapout);
                 return p;
               };
@@ -246,7 +260,7 @@ function () {
 
       Req.prototype = Object.create(this);
       Req.prototype.axios = _axios.default.create(op);
-      return new Req();
+      return;
     }
   }, {
     key: "createSource",
@@ -295,8 +309,8 @@ function () {
           }
         }
 
-        for (var _len3 = arguments.length, rest = new Array(_len3 > 1 ? _len3 - 1 : 0), _key3 = 1; _key3 < _len3; _key3++) {
-          rest[_key3 - 1] = arguments[_key3];
+        for (var _len2 = arguments.length, rest = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+          rest[_key2 - 1] = arguments[_key2];
         }
 
         if (method && name !== null && module === null) {
