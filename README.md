@@ -103,15 +103,19 @@ req.apis.d.get() //get
 
 ## API
 
-### `new Puta([options], [paths])`  or  `puta([options], [paths])`
+### `new Puta([axiosConfig], [options])`  or  `puta([axiosConfig], [options])`
 
-**options**  
-options is the axios config, the follow up requests all base on this options
+**axiosConfig**  
+axiosConfig is the axios config, the follow up requests all base on this options
 
-**paths**  type: object
+**options**  type: object
 
-if you pass a paths object, it will register a path module named 'common'.
-
+to config puta. 
+```
+{
+  stringfieldData: false, // default , auto stringfield for post method
+}
+```
 ### Instance property
 
 **.mApis**
@@ -135,12 +139,13 @@ directly to access api paths without namespace, that means there is a risk of na
 `.head(url [, params [, config]])`  
 `.options(url [, params [, config]])`  
 `.post(url [,data, [,stringified] [,config]])`  
-`.put(url [,data, [,stringified] [,config]])`  
-`.patch(url [,data, [,stringified] [,config]])`
+`.put(url [,data, [,config]])`  
+`.patch(url [,data, [,config]])`
 
 *config*: is the axios config.  
 
-*stringified*: boolean, whether to  serializes data like `querystring.stringify()` do .
+*stringified*: boolean, whether to  serializes data like `querystring.stringify()` do . 
+you can pass a Object, now it will be treated as config, and the value stringified will take from `puta.options.stringfieldData`
 
 
 **.all(Array\<Promise\>)**
@@ -163,10 +168,11 @@ alias of axios.interceptors.response.use
 
 
 
-**.moduleRegister(apis, name)** :sweet_potato::sweet_potato::sweet_potato:
+**.moduleRegister(apis, name, axiosConfig)** :sweet_potato::sweet_potato::sweet_potato:
 
 apis: `path module`, type: object  
 name: `module namespace`, type: string
+axiosOption:
 
 *apis:*  
 type: `object`
@@ -174,11 +180,12 @@ type: `object`
 ```js
 {
   // path value can be a string or a object
-  path1: '',  
-  path2: {
+  path1: '',  // value is a string
+  path2: {  // value is a object
     path: '', //required
     adapin: data=>data, // optional
     adapout: response=>response, //optional
+    config: {}, //optional
   }
 }
 ```

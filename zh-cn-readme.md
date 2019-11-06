@@ -85,6 +85,7 @@ req.moduleRegister({
 
       return response
     },
+    option: {} // axios config
   },
 }, 'home')
 
@@ -107,15 +108,19 @@ req.apis.d.get() //此处 get可以省略
 
 ## API
 
-### `new Puta([options], [paths])`  or  `puta([options], [paths])`
+### `new Puta([axiosConfig], [options])`  or  `puta([axiosConfig], [options])`
 
-**options**  
-options 就是 axios 的 config, 之后的请求都共享这份基础配置, 除非在请求时另外指定.
+**axiosConfig**  
+axiosConfig 就是 axios 的 config, 之后的请求都共享这份基础配置, 除非在请求时另外指定.
 
-**paths**  type: object
+**options**  type: object
 
-paths 是和 moduleRegister 的参数一样, 在初始化时直接注册一个叫做 'common' 的路径模块
-
+给 puta 本身的一些配置项, 目前比较少
+```
+{
+  stringfieldData: false, // default , auto stringfield for post method
+}
+```
 
 ### Instance property
 
@@ -140,13 +145,13 @@ type: `Proxy`
 `.head(url [, params [, config]])`  
 `.options(url [, params [, config]])`  
 `.post(url [,data, [,stringified] [,config]])`  
-`.put(url [,data, [,stringified] [,config]])`  
-`.patch(url [,data, [,stringified] [,config]])`
+`.put(url [,data, [,config]])`  
+`.patch(url [,data, [,config]])`
 
 *config*: axios 的 config  
 
 *stringified*: boolean, 类似 `querystring.stringify()` 一样序化请求体 .
-
+你也可以传递一个对象, 这个时候就会被当做 config 来对待. 而 stringified 的值由 `puta.options.stringfieldData` 来决定
 
 **.all(Array\<Promise\>)**
 
@@ -168,10 +173,11 @@ callback 函数接收一个参数:  axios实例的 defaults 属性, 可以在此
 
 
 
-**.moduleRegister(apis, name)** :sweet_potato::sweet_potato::sweet_potato:
+**.moduleRegister(apis, name, axiosConfig)** :sweet_potato::sweet_potato::sweet_potato:
 
 apis: `路径模块`, type: object  
 name: `模块的命名空间`, type: string
+axiosConfig: 这个模块的所有请求都会结合这个 config
 
 *apis:*  
 type: `object`
@@ -179,11 +185,12 @@ type: `object`
 ```js
 {
   // path 的值可以是字符串或对象
-  path1: '',  
-  path2: {
+  path1: '',  // 值是一个字符串
+  path2: { // 值是一个对象
     path: '', //required
     adapin: data=>data, // optional
     adapout: response=>response, //optional
+    config: {}, //optional
   }
 }
 ```
@@ -191,6 +198,7 @@ type: `object`
 adapin 函数可以在 data 传递给请求之前进行一些处理, 必须返回一个处理后的 data
 
 adapout 函数可以在响应数据返回之后立即进行一些处理, 必须返回一个处理后响应数据.
+config: axios 的 config , 只对  此请求路径有效
 
 **.createSource()** :sweet_potato::sweet_potato::sweet_potato:
 
