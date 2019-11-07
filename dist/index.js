@@ -58,10 +58,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 var Request =
 /*#__PURE__*/
 function () {
-  function Request(initRequest, paths) {
+  function Request(axiosConfig) {
     var _this = this;
 
-    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     _classCallCheck(this, Request);
 
@@ -69,12 +69,22 @@ function () {
       return _this.dataMethod('post').apply(void 0, arguments);
     });
 
-    _defineProperty(this, "put", function () {
-      return _this.dataMethod('put').apply(void 0, arguments);
+    _defineProperty(this, "put", function (url, data) {
+      var op = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return _this.request(_objectSpread({
+        url: url,
+        params: data,
+        method: 'put'
+      }, op));
     });
 
-    _defineProperty(this, "patch", function () {
-      return _this.dataMethod('patch').apply(void 0, arguments);
+    _defineProperty(this, "patch", function (url, data) {
+      var op = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return _this.request(_objectSpread({
+        url: url,
+        params: data,
+        method: 'patch'
+      }, op));
     });
 
     _defineProperty(this, "delete", function (url, data) {
@@ -140,16 +150,12 @@ function () {
       return _this.mApis[name] = _this.registerApi(apis, option);
     });
 
-    this.axios = _axios.default.create(initRequest);
+    this.axios = _axios.default.create(axiosConfig || {});
     this.options = Object.assign({
       stringfieldData: false
     }, options);
     this.mApis = {};
-    this.defaultsOp = initRequest;
-
-    if (paths) {
-      this.moduleRegister(paths, 'common');
-    }
+    this.defaultsOp = axiosConfig;
   } // 需要传送 data body 的 method
 
 
@@ -160,13 +166,19 @@ function () {
 
       return function (url, data, isStringfield) {
         var op = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-        isStringfield = isStringfield === undefined ? _this2.options.stringfieldData : isStringfield;
+        var isDataString = typeof data === 'string'; // 修正 isStringfield 和 op 的值
 
-        if (typeof isStringfield === 'boolean' && isStringfield) {
-          data = (0, _stringify.default)(data);
-        } else if (Object.prototype.toString.call(isStringfield) === '[object Object]') {
+        if (Object.prototype.toString.call(isStringfield) === '[object Object]') {
           op = isStringfield;
-          if (_this2.options.stringfieldData) data = (0, _stringify.default)(data);
+          isStringfield = _this2.options.stringfieldData;
+        } else if (isStringfield === undefined) {
+          isStringfield = _this2.options.stringfieldData;
+        } else if (typeof isStringfield !== 'boolean') {
+          isStringfield = false;
+        }
+
+        if (!isDataString && isStringfield) {
+          data = (0, _stringify.default)(data);
         }
 
         return _this2.request(_objectSpread({
@@ -221,10 +233,10 @@ function () {
                 if (adapin) data = adapin(data);
                 var p = null;
 
-                if (['post', 'put', 'patch'].includes(method)) {
-                  p = self[method](usePath, data, arguments.length <= 1 ? undefined : arguments[1], _objectSpread({}, moduleOption, pathVal.option || {}, (arguments.length <= 2 ? undefined : arguments[2]) || {}));
+                if (['post'].includes(method)) {
+                  p = self[method](usePath, data, arguments.length <= 1 ? undefined : arguments[1], _objectSpread({}, moduleOption, pathVal.config || {}, (arguments.length <= 2 ? undefined : arguments[2]) || {}));
                 } else {
-                  p = self[method](usePath, data, _objectSpread({}, moduleOption, pathVal.option || {}, (arguments.length <= 1 ? undefined : arguments[1]) || {}));
+                  p = self[method](usePath, data, _objectSpread({}, moduleOption, pathVal.config || {}, (arguments.length <= 1 ? undefined : arguments[1]) || {}));
                 }
 
                 if (adapout) p.then(adapout);
@@ -344,7 +356,7 @@ function () {
 
       var bindFn = fn.bind(this);
       Object.assign(bindFn, this, {
-        axios: _axios.default.create(op)
+        axios: _axios.default.create(this.defaultsOp)
       });
       return bindFn;
     }
