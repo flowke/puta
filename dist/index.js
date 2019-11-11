@@ -66,10 +66,10 @@ function splitCfg() {
       rest = _objectWithoutProperties(config, ["stringfieldData"]);
 
   return {
-    axios: {
+    puta: {
       stringfieldData: stringfieldData
     },
-    puta: rest
+    axios: rest
   };
 }
 
