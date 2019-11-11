@@ -27,9 +27,9 @@ require("core-js/modules/es6.date.to-string");
 
 require("core-js/modules/es6.object.to-string");
 
-require("core-js/modules/es6.object.assign");
-
 require("core-js/modules/es6.function.name");
+
+require("core-js/modules/es6.object.assign");
 
 var _axios = _interopRequireDefault(require("axios"));
 
@@ -55,18 +55,40 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function splitCfg() {
+  var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+  var stringfieldData = config.stringfieldData,
+      rest = _objectWithoutProperties(config, ["stringfieldData"]);
+
+  return {
+    axios: {
+      stringfieldData: stringfieldData
+    },
+    puta: rest
+  };
+}
+
+function assign() {
+  return Object.assign.apply(Object, arguments);
+}
+
 var Request =
 /*#__PURE__*/
 function () {
-  function Request(axiosConfig) {
+  function Request() {
     var _this = this;
 
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
     _classCallCheck(this, Request);
 
-    _defineProperty(this, "post", function () {
-      return _this.dataMethod('post').apply(void 0, arguments);
+    _defineProperty(this, "post", function (url, data, isStringfield, op) {
+      return _this.dataMethod('post')(url, data, isStringfield, op);
     });
 
     _defineProperty(this, "put", function (url, data) {
@@ -150,12 +172,14 @@ function () {
       return _this.mApis[name] = _this.registerApi(apis, option);
     });
 
-    this.axios = _axios.default.create(axiosConfig || {});
-    this.options = Object.assign({
+    config = Object.assign({
       stringfieldData: false
-    }, options);
+    }, config);
+    config = splitCfg(config);
+    this.axios = _axios.default.create(config.axios || {});
+    this.options = config.puta;
     this.mApis = {};
-    this.defaultsOp = axiosConfig;
+    this.defaultsOp = config.axios;
   } // 需要传送 data body 的 method
 
 
@@ -177,7 +201,7 @@ function () {
           isStringfield = false;
         }
 
-        if (!isDataString && isStringfield) {
+        if (data && !isDataString && isStringfield) {
           data = (0, _stringify.default)(data);
         }
 
@@ -204,6 +228,11 @@ function () {
       var moduleOption = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var pathNames = Object.keys(paths);
       var self = this;
+
+      var _splitCfg = splitCfg(moduleOption),
+          putaCfg = _splitCfg.puta,
+          axiosCfg = _splitCfg.axios;
+
       var methods = ['get', 'post', 'put', 'patch', 'delete', 'head', 'option'];
 
       var createMethod = function createMethod(path) {
@@ -221,22 +250,24 @@ function () {
 
               if (typeof pathVal === 'string') {
                 usePath = pathVal;
-              }
-
-              if (Object.prototype.toString.call(pathVal) === '[object Object]') {
+              } else if (Object.prototype.toString.call(pathVal) === '[object Object]') {
                 usePath = pathVal.path;
                 adapin = pathVal.adapin;
                 adapout = pathVal.adapout;
+              } else {
+                // path is not string or Object, get nothing
+                return;
               }
 
-              return function (data) {
+              return function (data, arg1, arg2) {
+                var isStringfield = arg1 === undefined ? putaCfg.stringfieldData : arg1;
                 if (adapin) data = adapin(data);
                 var p = null;
 
                 if (['post'].includes(method)) {
-                  p = self[method](usePath, data, arguments.length <= 1 ? undefined : arguments[1], _objectSpread({}, moduleOption, pathVal.config || {}, (arguments.length <= 2 ? undefined : arguments[2]) || {}));
+                  p = self[method](usePath, data, isStringfield, assign({}, axiosCfg, pathVal.config, arg2));
                 } else {
-                  p = self[method](usePath, data, _objectSpread({}, moduleOption, pathVal.config || {}, (arguments.length <= 1 ? undefined : arguments[1]) || {}));
+                  p = self[method](usePath, data, assign({}, axiosCfg, pathVal.config, arg1));
                 }
 
                 if (adapout) p.then(adapout);
