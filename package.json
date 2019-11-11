@@ -4,7 +4,7 @@
   "description": "A request lib, encapsulation of axios.",
   "main": "dist/index.js",
   "scripts": {
-    "build": "babel **/*.js -d dist"
+    "build": "babel lib/*.js -d dist"
   },
   "repository": {
     "type": "git",
