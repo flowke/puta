@@ -5,32 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = _default;
 
-require("core-js/modules/es7.symbol.async-iterator");
-
-require("core-js/modules/es6.symbol");
-
-require("core-js/modules/es6.regexp.split");
-
-require("core-js/modules/es6.string.includes");
-
-require("core-js/modules/es7.array.includes");
-
-require("core-js/modules/web.dom.iterable");
-
-require("core-js/modules/es6.array.iterator");
-
-require("core-js/modules/es6.object.keys");
-
-require("core-js/modules/es6.regexp.to-string");
-
-require("core-js/modules/es6.date.to-string");
-
-require("core-js/modules/es6.object.to-string");
-
-require("core-js/modules/es6.function.name");
-
-require("core-js/modules/es6.object.assign");
-
 var _axios = _interopRequireDefault(require("axios"));
 
 var _stringify = _interopRequireDefault(require("./stringify"));
@@ -59,6 +33,8 @@ function _objectWithoutProperties(source, excluded) { if (source == null) return
 
 function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
 
+var CancelToken = _axios.default.CancelToken;
+
 function splitCfg() {
   var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
@@ -71,6 +47,10 @@ function splitCfg() {
     },
     axios: rest
   };
+}
+
+function type(val) {
+  return Object.prototype.toString.call(val);
 }
 
 function assign() {
@@ -146,7 +126,34 @@ function () {
 
     _defineProperty(this, "request", function () {
       var op = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-      return _this.axios(op);
+
+      var cancel = op.cancel,
+          use = op.use,
+          cancelUse = op.cancelUse,
+          reqOption = _objectWithoutProperties(op, ["cancel", "use", "cancelUse"]);
+
+      var source = null;
+      if (cancel !== undefined) source = CancelToken.source();
+      var typeStr = Object.prototype.toString.call(cancel);
+
+      if (typeStr === '[object Object]') {
+        cancel.cancel = source.cancel.bind(source);
+        cancel.token = source.token;
+        reqOption.cancelToken = source.token;
+      }
+
+      if (typeStr === '[object Function]') {
+        reqOption.cancelToken = source.token;
+        typeStr(source);
+      }
+
+      var req = _this.axios(reqOption);
+
+      if (!cancelUse && type(use) === '[object Function]') {
+        req = req.then(use);
+      }
+
+      return req;
     });
 
     _defineProperty(this, "setDefaults", function () {
@@ -176,10 +183,18 @@ function () {
       stringfieldData: false
     }, config);
     config = splitCfg(config);
-    this.axios = _axios.default.create(config.axios || {});
+
+    var ax = this.axios = _axios.default.create(config.axios || {});
+
     this.options = config.puta;
     this.mApis = {};
     this.defaultsOp = config.axios;
+    ax.interceptors.response.use(function (res) {
+      return res;
+    }, function (err) {
+      if (ax.isCancel(err)) err.isCancel = true;
+      throw err;
+    });
   } // 需要传送 data body 的 method
 
 
