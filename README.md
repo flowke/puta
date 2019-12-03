@@ -101,6 +101,21 @@ req.apis.d.get() //get
 ```
 
 
+## Cancellation
+
+```js
+let source = {}
+
+req.get(null,{
+  cancel: source
+})
+
+source.cancel();
+
+```
+
+## Use
+
 ## API
 
 ### `new Puta([axiosConfig], [options])`  or  `puta([axiosConfig], [options])`

@@ -192,7 +192,7 @@ function () {
     ax.interceptors.response.use(function (res) {
       return res;
     }, function (err) {
-      if (ax.isCancel(err)) err.isCancel = true;
+      if (_axios.default.isCancel(err)) err.isCancel = true;
       throw err;
     });
   } // 需要传送 data body 的 method
