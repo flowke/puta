@@ -1,17 +1,17 @@
 # puta
-A request lib, base on [axios](https://github.com/axios/axios).
+基于 [axios](https://github.com/axios/axios) 封装的请求库.
 
-[简体中文](./zh-cn-readme.md)
+<!-- [中文](./zh-cn-readme.md) -->
 
-## Installing
+## 安装
 
 ```
 $ npm install puta
 ```
 
-## Example
+## 使用
 
-instance Request
+得到实例
 
 ```js
 import Request form 'puta';
@@ -21,7 +21,7 @@ let req = new Request({
   timeout: 12000
 });
 
-// or
+// 或
 let req = Request({
   baseURL: xxx,
   timeout: 12000
@@ -30,7 +30,7 @@ let req = Request({
 
 ```
 
-Performing a request
+进行请求:
 
 ```js
 req.get('/user', {ID: '12345'})
@@ -52,98 +52,90 @@ req.post('/user', {ID: '12345'})
 
 ```
 
-register paths modules
+注册模块化的请求路径:
 
 ```js
 import puta form 'puta';
 
 let req = puta();
 
-// register a menu module
+// 注册一个 menu 的路径模块
 req.moduleRegister({
   a: '/app',
   b: '/init.js',
 }, 'menu')
 
-// register a home module
-// path also can pass a object 
+// 注册一个  home 的路径模
+// 路径除了是字符串, 还可以是对象 
 req.moduleRegister({
   c: '/app',
   d: {
     path: '/init.js',
     adapin: (data)=>{
 
-      // here to deal with data before pass to request
+      // 在 data 传递给请求之前, 可以处理下 data
+      // 必须返回数据
 
       return data
     },
     adapout: (response)=>{
       
-      // here to deal with response after response
+      // 在响应后, 可以处理下响应数据
+      // 必须返回 数据
 
       return response
     },
+    option: {} // axios config
   },
 }, 'home')
 
 
-// now you can perform a request like this:
+// 然后你可以像下面这样请求
 
-// use the 'a' path in the module menu
-// access path with module namespace
-req.mApis.home.a() // get
-req.mApis.home.a.post() //post
+// mApis 保存着模块的命名空间
+// 例如上面我们注册的 home 和 menu
+req.mApis.home.a(...rest) // get 请求
+req.mApis.home.a.post(...rest) //post
 
-// access path without module namespace
+// 等价于 req.post('/app', ...rest)
+
+// apis 可以直接访问路径名, 无需加上模块名, 但需要警惕命名污染
 req.apis.a.post() //post
-req.apis.d.get() //get
+req.apis.d.get() //此处 get可以省略
 
 ```
 
-
-## Cancellation
-
-```js
-let source = {}
-
-req.get(null,{
-  cancel: source
-})
-
-source.cancel();
-
-```
-
-## Use
 
 ## API
 
-### `new Puta([axiosConfig], [options])`  or  `puta([axiosConfig], [options])`
+### `new Puta([config])`  or  `puta([config]])`
 
-**axiosConfig**  
-axiosConfig is the axios config, the follow up requests all base on this options
+**config**  
+此 config 我们把它叫做 puta 的 config.
 
-**options**  type: object
+其配置项包括:
+* 任何 axios config 的配置项
+* 还有如下额外配置:
 
-to config puta. 
 ```
 {
   stringfieldData: false, // default , auto stringfield for post method
 }
 ```
+
 ### Instance property
 
 **.mApis**
 
 type: `Proxy`
 
-namespace of api paths.
+api 路径的命名空间
 
 **.apis**
 
 type: `Proxy`
 
-directly to access api paths without namespace, that means there is a risk of naming contamination
+可以不通过命名空间直接访问路径名, 但要警惕命名污染, 如果有两个以上的路径模块拥有同一个路径名, 可能会产生非预期的结果.
 
 ### Instance methods
 
@@ -157,46 +149,45 @@ directly to access api paths without namespace, that means there is a risk of na
 `.put(url [,data, [,config]])`  
 `.patch(url [,data, [,config]])`
 
-*config*: is the axios config.  
+*config*: axios 的 config  
 
-*stringified*: boolean, whether to  serializes data like `querystring.stringify()` do . 
-you can pass a Object, now it will be treated as config, and the value stringified will take from `puta.options.stringfieldData`
-
+*stringified*: boolean, 类似 `querystring.stringify()` 一样序化请求体 .
+你也可以传递一个对象, 这个时候就会被当做 config 来对待. 而 stringified 的值由 `puta.options.stringfieldData` 来决定
 
 **.all(Array\<Promise\>)**
 
-like axios.all()
+同 axios.all()
 
 **.setDefaults(callback)**
 
-callback is a function allow you to receive one argument: axios-instance's defaults
+callback 函数接收一个参数:  axios实例的 defaults 属性, 可以在此修改一下默认 config, 这会覆盖 实例化 puta 时传入的 config
 
 
 **.reqUse(...args)**
 
-alias of axios.interceptors.request.use
+ 同 of axios.interceptors.request.use
 
 
 **.resUse(...args)**
 
-alias of axios.interceptors.response.use
+同 of axios.interceptors.response.use
 
 
 
-**.moduleRegister(apis, name, axiosConfig)** :sweet_potato::sweet_potato::sweet_potato:
+**.moduleRegister(apis, name, config)** :sweet_potato::sweet_potato::sweet_potato:
 
-apis: `path module`, type: object  
-name: `module namespace`, type: string
-axiosOption:
+apis: `路径模块`, type: object  
+name: `模块的命名空间`, type: string
+config: 这个模块的所有请求都会结合这个 config, puta的 config
 
 *apis:*  
 type: `object`
 
 ```js
 {
-  // path value can be a string or a object
-  path1: '',  // value is a string
-  path2: {  // value is a object
+  // path 的值可以是字符串或对象
+  path1: '',  // 值是一个字符串
+  path2: { // 值是一个对象
     path: '', //required
     adapin: data=>data, // optional
     adapout: response=>response, //optional
@@ -205,21 +196,23 @@ type: `object`
 }
 ```
 
-adapin is a function, receive request data, you will get a chance to transform data, and must to return the data after worked	out.
+adapin 函数可以在 data 传递给请求之前进行一些处理, 必须返回一个处理后的 data
 
-adapout is a function, receive response data, you will get a chance to transform data, and must to return the data after worked	out.
+adapout 函数可以在响应数据返回之后立即进行一些处理, 必须返回一个处理后响应数据.  
+
+config: puta 的 config , 只对  此请求路径有效
 
 **.createSource()** :sweet_potato::sweet_potato::sweet_potato:
 
-return a `source` object.
+返回一个新的 `source` 对象实例.
 
-the `source` has all property and method of puta instance. 
+`source` 拥有 puta 实例的所有属性和方法. 
 
-and has two additional methods: 
+同时还拥有两个额外的方法: 
 
 **-- _source.f(path, ...rest)_** 
 
-path is a string that has a pattern of follows:  
+path 参数是一个字符串, 遵循以下规则:  
 
 - module.name.method
 - module.name
@@ -252,23 +245,25 @@ source.f('xxx', ...rest):
 puta.apis.xxx.get(...rest)
 
 ```
-The difference between using `f` and `puta` to do request is: 
+ 
+使用 `f` 方法进行的请求 和 使用 `puta` 实例进行请求的不同在于:  
 
-`f` will always get a fresh result and then cache the result, and `puta` request won't cache.
-
+`f`会在请求后缓存结果, 而 'puta' 实例的请求不会
 <br>
 
 **-- _source.take(path)_**
 
-use `f`'s path pattern(without method) to take the cached result.
+取出 `f` 请求缓存的结果:
 
 example:
 
 ```js
 source.f('menu.xxx.post')
 
-// in the other moment(pretending request done) you can take out the result like this:
-// notes: no method
+// 假设上面的请求已经返回之后, 我们进行取出操作
+
 source.take('menu.xxx')
 
 ```
+
+> 注意: 使用 take(path) 取出缓存结果时, path 不区分请求时的 method, path 字符中也无需拼接 method, 就像上面的例子一样.
