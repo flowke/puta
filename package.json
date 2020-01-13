@@ -4,7 +4,8 @@
   "description": "A request lib, encapsulation of axios.",
   "main": "dist/index.js",
   "scripts": {
-    "build": "babel lib/*.js -d dist"
+    "build": "babel lib/*.js -d dist",
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -16,7 +17,7 @@
     "req",
     "puta"
   ],
-  "author": "flowke",
+  "author": "Flowke",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/flowke/puta/issues"
@@ -32,7 +33,8 @@
     "@babel/plugin-proposal-class-properties": "^7.4.4",
     "@babel/plugin-transform-modules-commonjs": "^7.4.4",
     "@babel/preset-env": "^7.4.5",
-    "husky": "^2.4.1"
+    "husky": "^2.4.1",
+    "jest": "^24.9.0"
   },
   "husky": {
     "hooks": {}
