@@ -3,6 +3,8 @@ const desiredPuta = require('./desiredPuta');
 import axios from 'axios';
 import stringify from 'lib/stringify';
 
+const apiM = require('./serviceModule');
+
 let initConfig = {
   url: '/a/b',
   data: {a:1,b:2},
@@ -27,6 +29,11 @@ describe('实例化方式',()=>{
   it('通过函数调用 实例化',()=>{
     let puta = Puta()
     expect(puta).toMatchObject(desiredPuta)
+  })
+  it('接收默认参数',()=>{
+    let puta = Puta({ stringfieldData: false, a:1})
+    puta.axios.create = jest.fn()
+    expect(puta.axios.create).toHaveBeenCalledWith({ a: 1})
   })
 
 })
@@ -113,13 +120,107 @@ it('setDefaults', ()=>{
 
 })
 
-// it('reqUse', ()=>{
-  
-// })
+// interceptors
+describe('interceptors', ()=>{
+  it.each([
+    ['reqUse', 'request'],
+    ['resUse', 'response'],
+  ])('%s', (name, m)=>{
+    let puta = Puta();
+    puta.axios.interceptors[m].use = jest.fn()
+    let fna = f => f
+    let fnb = f => f
+    puta[name](fna, fnb)
+    puta[name](fna, fnb)
 
-it('resUse', ()=>{
-  let puta = Puta();
-  let fna = f=>f
-  let fnb = f=>f
-  puta.resUse(fna, fnb)
+    expect(puta.axios.interceptors[m].use).toHaveBeenCalledTimes(2);
+    expect(puta.axios.interceptors[m].use).toHaveBeenNthCalledWith(1, fna, fnb);
+    expect(puta.axios.interceptors[m].use).toHaveBeenNthCalledWith(2, fna, fnb);
+  })
+})
+
+// 模块注册
+describe('模块注册', ()=>{
+  let initPuta = ()=>{
+    let puta = createPuta({ cf: 'default', p: 4, fourthly: true});
+
+    puta.axios = jest.fn()
+
+    puta.axios.mockResolvedValue({val: 'res'})
+
+    puta.moduleRegister(apiM.ma, 'ma', { cf: 'ma', 'p': 3, third: true })
+    puta.moduleRegister(apiM.mb, 'mb', { cf: 'mb', 'p': 3, third: true })
+
+    return puta
+  }
+
+  function eachApi(fn){
+    ;[
+      ['a', 'ma', { d: 'd' }],
+      ['b', 'ma', { d: 'd' }],
+      ['c', 'mb', { d: 'd' }],
+      ['d', 'mb', { d: 'd' }],
+    ].forEach(([name, m, d]) => {
+      fn(name, m, d)
+    })
+  }
+
+  // 模块都注册成功
+  it('模块注册成功, 可以访问所有注册的api', ()=>{
+    let puta = initPuta()
+
+    eachApi((name, m, d)=>{
+      puta.apis[name].get(d)
+      puta.mApis[m][name].get(d)
+    })
+    expect(puta.axios).toHaveBeenCalledTimes(8)
+  })
+
+  it.each([
+    ['get'],
+    ['delete'],
+    ['head'],
+    ['options'],
+    ['post'],
+    ['put'],
+    ['patch'],
+  ])('api使用动词请求: %s', (method)=>{
+    let puta = initPuta()
+    
+    eachApi((name, m, d) => {
+      puta.apis[name][method](d)
+      puta.mApis[m][name][method](d)
+      if(method==='get'){
+        puta.apis[name](d)
+        puta.mApis[m][name](d)
+      }
+    })
+
+    let times = (method === 'get' ? 4  : 2 )*4
+
+    expect(puta.axios).toHaveBeenCalledTimes(times)
+  })
+
+  it('config 层级覆盖', ()=>{
+    let puta = initPuta()
+
+    puta.apis.a.get(null, { first: true, cf:'a', p: 1 })
+    puta.apis.a(null, { first: true, cf:'a', p: 1 })
+    // puta.apis.c.post({}, { first: true, p: 1 })
+
+    expect(puta.axios.mock.calls[0][0]).toStrictEqual({
+      method: 'get',
+      url: '/a',
+      params: null,
+      ...{ first: true, cf: 'a', 'p': 1, third: true, fourthly: true }
+    })
+    expect(puta.axios.mock.calls[1][0]).toStrictEqual({
+      method: 'get',
+      url: '/a',
+      params: null,
+      ...{ first: true, cf: 'a', 'p': 1, third: true, fourthly: true }
+    })
+
+  })
+
 })
