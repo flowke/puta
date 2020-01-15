@@ -1,6 +1,5 @@
 import Puta from 'lib';
 const desiredPuta = require('./desiredPuta');
-import axios from 'axios';
 import stringify from 'lib/stringify';
 
 const apiM = require('./serviceModule');
@@ -32,7 +31,6 @@ describe('实例化方式',()=>{
   })
   it('接收默认参数',()=>{
     let puta = Puta({ stringfieldData: false, a:1})
-    puta.axios.create = jest.fn()
     expect(puta.axios.create).toHaveBeenCalledWith({ a: 1})
   })
 
@@ -142,14 +140,30 @@ describe('interceptors', ()=>{
 // 模块注册
 describe('模块注册', ()=>{
   let initPuta = ()=>{
-    let puta = createPuta({ cf: 'default', p: 4, fourthly: true});
+    let puta = createPuta({ 
+      cf: 'default', 
+      default: true,
+      use: (d) => Object.assign({ outDefault: true},d)
+    });
 
     puta.axios = jest.fn()
+    puta.axios.mockResolvedValue({ val: 'res', call: jest.fn() })
 
-    puta.axios.mockResolvedValue({val: 'res'})
+    puta.moduleRegister(apiM.ma, 'ma', { 
+      cf: 'module', module: true,
+      use: (d) => {
+        d.call('module')
+        return Object.assign({ outModule: true }, d)
+      }
 
-    puta.moduleRegister(apiM.ma, 'ma', { cf: 'ma', 'p': 3, third: true })
-    puta.moduleRegister(apiM.mb, 'mb', { cf: 'mb', 'p': 3, third: true })
+    })
+    puta.moduleRegister(apiM.mb, 'mb', { 
+      cf: 'module', module: true ,
+      use: (d) => {
+        d.call('module')
+        return Object.assign({ outModule: true }, d)
+      }
+    })
 
     return puta
   }
@@ -165,62 +179,174 @@ describe('模块注册', ()=>{
     })
   }
 
-  // 模块都注册成功
-  it('模块注册成功, 可以访问所有注册的api', ()=>{
-    let puta = initPuta()
+  // 使用所有 动词方法, 对所有注册的 api 进行依次调用
+  describe.each([
+    ['get', 'params'],
+    ['delete', 'params'], 
+    ['head', 'params'],
+    ['options', 'params'],
+    ['post', 'data'],
+    ['put', 'data'],
+    ['patch', 'data'],
+  ])('动词请求: %s', (method, dataKey)=>{
 
-    eachApi((name, m, d)=>{
-      puta.apis[name].get(d)
-      puta.mApis[m][name].get(d)
+    it('所有api可以用:', ()=>{
+      let puta = initPuta()
+
+      eachApi((name, m, d) => {
+        puta.apis[name][method](d)
+        puta.mApis[m][name][method](d)
+        if (method === 'get') {
+          puta.apis[name](d)
+          puta.mApis[m][name](d)
+        }
+      })
+      let times = (method === 'get' ? 4 : 2) * 4
+      expect(puta.axios).toHaveBeenCalledTimes(times)
     })
-    expect(puta.axios).toHaveBeenCalledTimes(8)
-  })
 
-  it.each([
-    ['get'],
-    ['delete'],
-    ['head'],
-    ['options'],
-    ['post'],
-    ['put'],
-    ['patch'],
-  ])('api使用动词请求: %s', (method)=>{
-    let puta = initPuta()
-    
-    eachApi((name, m, d) => {
-      puta.apis[name][method](d)
-      puta.mApis[m][name][method](d)
-      if(method==='get'){
-        puta.apis[name](d)
-        puta.mApis[m][name](d)
+    // request 级别最优先
+    it('config 层级覆盖: request prior', () => {
+      let puta = initPuta()
+
+      puta.apis.a[method](null, { cf: 'request', request: true, id: 2 })
+      puta.apis.c[method](null, { cf: 'request', request: true, id: 2 })
+
+      let expectData = {
+        method: method,
+        [dataKey]: null,
+        ...{ cf: 'request', request: true, id: 2, module: true }
       }
+      
+      expect(puta.axios.mock.calls[0][0]).toStrictEqual({
+        url: apiM.ma.a,
+        ...expectData,
+      })
+      expect(puta.axios.mock.calls[1][0]).toStrictEqual({
+        url: apiM.mb.c.path,
+        ...expectData,
+        [dataKey]: { p: 2, 'second': true },
+        path: true,
+      })
+
+      if (method === 'get') {
+        puta.apis.a(null, { cf: 'request', request: true, id: 1 })
+        puta.apis.c(null, { cf: 'request', request: true, id: 1 })
+        expect(puta.axios.mock.calls[2][0]).toStrictEqual({
+          url: apiM.ma.a,
+          ...expectData,
+          id: 1
+        })
+        expect(puta.axios.mock.calls[3][0]).toStrictEqual({
+          url: apiM.mb.c.path,
+          ...expectData,
+          [dataKey]: { p: 2, 'second': true },
+          path: true,
+          id: 1
+        })
+      }
+      
+
+    })
+    it('config 层级覆盖: path prior', () => {
+      let puta = initPuta()
+
+      puta.apis.a[method](null)
+      puta.apis.c[method](null)
+
+      let expectData = {
+        method: method,
+        [dataKey]: null,
+        ...{ cf: 'module', module: true }
+      }
+      
+      expect(puta.axios.mock.calls[0][0]).toStrictEqual({
+        url: apiM.ma.a,
+        ...expectData,
+      })
+      expect(puta.axios.mock.calls[1][0]).toStrictEqual({
+        url: apiM.mb.c.path,
+        ...expectData,
+        [dataKey]: { p: 2, 'second': true },
+        path: true,
+        cf: 'path'
+      })
+
+      if (method === 'get') {
+        puta.apis.a(null)
+        puta.apis.c(null)
+        expect(puta.axios.mock.calls[2][0]).toStrictEqual({
+          url: apiM.ma.a,
+          ...expectData,
+        })
+        expect(puta.axios.mock.calls[3][0]).toStrictEqual({
+          url: apiM.mb.c.path,
+          ...expectData,
+          [dataKey]: { p: 2, 'second': true },
+          path: true,
+          cf: 'path'
+        })
+      }
+      
+
     })
 
-    let times = (method === 'get' ? 4  : 2 )*4
 
-    expect(puta.axios).toHaveBeenCalledTimes(times)
+    it('请求参数与转换处理', ()=>{
+      let puta = initPuta();
+      let reqData = { 'tiny': 'h' }
+      puta.apis.a[method](reqData)
+      puta.apis.c[method](reqData)
+
+      expect(puta.axios.mock.calls[0][0][dataKey]).toStrictEqual({
+        ...reqData
+      })
+      expect(puta.axios.mock.calls[1][0][dataKey]).toStrictEqual({
+        ...reqData,
+        p: 2, 'second': true
+      })
+
+    })
+
+    it('use for response',()=>{
+      let puta = initPuta();
+      puta.axios.mockResolvedValue({ val: 'res', call: jest.fn() })
+
+      let req1 = puta.apis.a[method]()
+      .then(res=>{
+        expect(res).toStrictEqual({
+          val: 'res',
+          outModule: true,
+          call: res.call
+        })
+        expect(res.call).nthCalledWith(1, 'module')
+      })
+      puta.axios.mockResolvedValue({ val: 'res', call: jest.fn() })
+      let req2 = puta.apis.c[method]()
+      .then(res=>{
+
+        expect(res).toStrictEqual({
+          val: 'res',
+          outModule: true,
+          outC: true,
+          call: res.call
+        })
+        expect(res.call).nthCalledWith(1, 'module')
+        expect(res.call).nthCalledWith(2, 'pathcfg')
+
+      })
+      return Promise.all([req1, req2])
+
+    })
+
+    it.todo('cancel use')
+    it.todo('cancel request')
+    
   })
 
-  it('config 层级覆盖', ()=>{
-    let puta = initPuta()
-
-    puta.apis.a.get(null, { first: true, cf:'a', p: 1 })
-    puta.apis.a(null, { first: true, cf:'a', p: 1 })
-    // puta.apis.c.post({}, { first: true, p: 1 })
-
-    expect(puta.axios.mock.calls[0][0]).toStrictEqual({
-      method: 'get',
-      url: '/a',
-      params: null,
-      ...{ first: true, cf: 'a', 'p': 1, third: true, fourthly: true }
-    })
-    expect(puta.axios.mock.calls[1][0]).toStrictEqual({
-      method: 'get',
-      url: '/a',
-      params: null,
-      ...{ first: true, cf: 'a', 'p': 1, third: true, fourthly: true }
-    })
-
-  })
+  it.todo('cancel use for not module')
+  it.todo('cancel request for not module')
+  it.todo('for cancel error object')
+  it.todo('修改 config 覆盖层级的测试代码')
 
 })

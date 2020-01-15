@@ -6,9 +6,12 @@ exports.ma = {
 exports.mb = {
   c: {
     path: '/c',
-    adapin: jest.fn(d=>Object.assign(d,{p:2, 'second':true})),
-    adapout: jest.fn(d => Object.assign(d, { cs: 6 })),
-    config: {cf:'mb/c', mbc: true}
+    reqData: jest.fn(d=>Object.assign({},d,{p:2, 'second':true})),
+    use: jest.fn(d => {
+      d.call('pathcfg')
+      return Object.assign({}, d, { outC: true })
+    }),
+    config: {cf:'path', path: true}
   },
   d: '/b'
 }
