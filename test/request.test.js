@@ -138,7 +138,7 @@ describe('interceptors', ()=>{
 })
 
 // 模块注册
-describe('模块注册', ()=>{
+describe('模块注册', ()=>{6
   let initPuta = ()=>{
     let puta = createPuta({ 
       cf: 'default', 
@@ -287,11 +287,9 @@ describe('模块注册', ()=>{
           cf: 'path'
         })
       }
-      
-
     })
 
-
+    // reqData
     it('请求参数与转换处理', ()=>{
       let puta = initPuta();
       let reqData = { 'tiny': 'h' }
@@ -308,45 +306,107 @@ describe('模块注册', ()=>{
 
     })
 
-    it('use for response',()=>{
+    // 配置 use和取消 use
+    it.each([
+      ['use', false],
+      ['cancelUse', true]
+    ])('%s for response',(name, cancel)=>{
       let puta = initPuta();
       puta.axios.mockResolvedValue({ val: 'res', call: jest.fn() })
 
-      let req1 = puta.apis.a[method]()
+      let req1 = puta.apis.a[method](null, {
+        cancelUse: cancel
+      })
       .then(res=>{
-        expect(res).toStrictEqual({
+        expect(res).toEqual({
           val: 'res',
-          outModule: true,
-          call: res.call
+          call: res.call,
+          outModule: cancel? undefined: true
         })
-        expect(res.call).nthCalledWith(1, 'module')
+        if(cancel){
+          expect(res.call).not.toBeCalled()
+        }else{
+          expect(res.call).nthCalledWith(1, 'module')
+        }
+        
       })
       puta.axios.mockResolvedValue({ val: 'res', call: jest.fn() })
-      let req2 = puta.apis.c[method]()
+      let req2 = puta.apis.c[method](null, { cancelUse: cancel})
       .then(res=>{
 
-        expect(res).toStrictEqual({
+        expect(res).toEqual({
           val: 'res',
-          outModule: true,
           outC: true,
+          outModule: cancel ? undefined : true,
           call: res.call
         })
-        expect(res.call).nthCalledWith(1, 'module')
-        expect(res.call).nthCalledWith(2, 'pathcfg')
-
+        if(cancel){
+          expect(res.call).nthCalledWith(1, 'pathcfg')
+          expect(res.call).toBeCalledTimes(1)
+        }else{
+          expect(res.call).nthCalledWith(1, 'module')
+          expect(res.call).nthCalledWith(2, 'pathcfg')
+          expect(res.call).toBeCalledTimes(2)
+        }
+        
       })
       return Promise.all([req1, req2])
 
     })
 
-    it.todo('cancel use')
-    it.todo('cancel request')
+
+    it.each([
+      ['fn',f=>f],
+      ['object',{}],
+      ['puta',false],
+    ])('cancel request: %s', (name, cancelVal)=>{
+      let puta = initPuta();
+
+      let cancel = name === 'puta' ? puta.cancel() : cancelVal;
+
+      // 可以在之前调用
+      if (name === 'puta'){
+        cancel('puta cancel');
+        cancel.cancel('puta cancel')
+        expect(cancel.__PUTACANCEL__).toBe(true)
+        // cancel 执行
+        expect(cancel.cancel).nthCalledWith(1, 'puta cancel')
+        expect(cancel.cancel).nthCalledWith(2, 'puta cancel')
+      }
+
+      puta.apis.a[method](null, {cancel})
+
+      puta.apis.c[method](null, {cancel})
+      
+      if(name==='puta'){
+        cancel('puta cancel')
+        cancel.cancel('puta cancel')
+        expect(cancel.__PUTACANCEL__).toBe(true)
+        // cancel 执行
+        expect(cancel.cancel).nthCalledWith(3,'puta cancel')
+        expect(cancel.cancel).nthCalledWith(4,'puta cancel')
+      }else{
+        cancel.cancel('err msg')
+        expect(cancel.cancel).nthCalledWith(1, 'err msg')
+      }
+      
+      expect(cancel.token).toBe('token')
+
+      // 参数有 token 对象
+      expect(puta.axios.mock.calls[0][0]).toMatchObject({
+        cancelToken: 'token',
+      })
+      expect(puta.axios.mock.calls[1][0]).toMatchObject({
+        cancelToken: 'token',
+      })
+      
+
+    })
     
   })
 
-  it.todo('cancel use for not module')
-  it.todo('cancel request for not module')
-  it.todo('for cancel error object')
-  it.todo('修改 config 覆盖层级的测试代码')
-
 })
+
+it.todo('cancel use for not module')
+it.todo('cancel request for not module')
+it.todo('for cancel error object')
