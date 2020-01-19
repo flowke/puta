@@ -563,10 +563,16 @@ puta.apis.cs.post({name: 'bob'}, false)
 
 ## res use 的执行顺序
 
-## reqData 的执行顺序
+## req use 的执行顺序
 
 ## 关于缓存
 
 ## :chicken::chicken: 为什么使用模块注册 
 
 ## :chicken::chicken: 为什么要在 config 中同时出现 use和 cancelUse
+
+
+
+- [ ] moduleRegister 第二个参数默认值为 default
+- [ ] puta 有初始实例化
+- [ ] 实例化隔开的缓存
