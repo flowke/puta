@@ -1,8 +1,9 @@
 
-let axios = jest.genMockFromModule('axios');
+// let axios = jest.genMockFromModule('axios');
+const axios = require('axios');
 
-axios.create = jest.fn(()=>axios)
-// console.log(axios,'axios');
+// axios.create = jest.fn(()=>axios)
+
 axios.CancelToken.source = jest.fn(()=>{
   return {
     cancel: jest.fn(),

@@ -31,7 +31,12 @@ describe('实例化方式',()=>{
   })
   it('接收默认参数',()=>{
     let puta = Puta({ stringfieldData: false, a:1})
-    expect(puta.axios.create).toHaveBeenCalledWith({ a: 1})
+    expect(puta.axios.defaults).toMatchObject({
+      a: 1
+    })
+    expect(puta.axios.defaults).not.toMatchObject({
+      stringfieldData: false
+    })
   })
 
 })
@@ -409,4 +414,27 @@ describe('模块注册', ()=>{6
 
 it.todo('cancel use for not module')
 it.todo('cancel request for not module')
-it.todo('for cancel error object')
+
+// it('for cancel error object', ()=>{
+//   let axios = jest.requireActual('axios')
+//   console.log(axios.CancelToken, 'axios');
+  
+//   let puta = Puta();
+//   // console.log(puta, 'puta');
+//   let cancel = puta.cancel(axios.CancelToken.source())
+  
+//   let req = puta.get('/', {
+//     cancel
+//   })
+//   .catch(e=>{
+//     console.log(cancel, 'e');
+//     console.log(e,'eee');
+    
+//     expect(e.isCancel).toBe(true)
+
+//   })
+//   cancel();
+
+//   return req
+
+// })
